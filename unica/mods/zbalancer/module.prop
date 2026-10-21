@@ -1,0 +1,4 @@
+id=zbalancer
+name=Framework multidex rebalancer
+author=ArtisanROM
+description=Relocates framework classes to a new dex to keep the S9280 reference pools under the 65535 limit.
