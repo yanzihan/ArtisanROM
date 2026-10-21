@@ -1,0 +1,4 @@
+id=vendor
+name=Vendor patches
+author=salvogiangri, ata-kaner
+description=sm8350/p3q vendor adaptations: fstab, props, camera floating feature
