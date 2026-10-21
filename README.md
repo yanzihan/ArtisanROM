@@ -15,9 +15,9 @@
   •
   <a  href="https://github.com/ArtisanROM/ArtisanROM/wiki">📖 Wiki</a>
   •
-  <a href="https://github.com/ArtisanROM/ArtisanROM/blob/sixteen-qpr2/CHANGELOG.md">📝 Changelog</a>
+  <a href="https://github.com/yanzihan/ArtisanROM/blob/sixteen-qpr2-sm8350/CHANGELOG.md">📝 Changelog</a>
   •
-  <a href="https://github.com/ArtisanROM/ArtisanROM/blob/sixteen-qpr2/MAINTAINERS">🧑‍💻 Maintainers</a>
+  <a href="https://github.com/yanzihan/ArtisanROM/blob/sixteen-qpr2-sm8350/MAINTAINERS">🧑‍💻 Maintainers</a>
 </p>
 
 # What is ArtisanROM Aether?
@@ -27,13 +27,13 @@ It's based on the latest and greatest iteration of Samsung's UX and it also incl
 
 It is based on the UN1CA build system which allows automatic downloading/extraction of the firmware, applying the required patches and generating a flashable zip package for the specified target device.
 
-ArtisanROM Aether supports devices using the Exynos 990 SoC
+ArtisanROM Aether supports devices using the Snapdragon SM-8350 SoC
 
 Any form of contribution, suggestions, bug report or feature request for the project will be welcome.
 
 # Features
 ### Core features:
-- Based on the latest stable Galaxy S24+ firmware
+- Based on the latest stable Galaxy S24 Ultra firmware
 - EROFS powered
 - Galaxy S26 wallpapers/sounds included
 - Galaxy AI support
@@ -75,7 +75,7 @@ Any form of contribution, suggestions, bug report or feature request for the pro
 - Integrated OTA updates app
 - Completely upstreamed kernels*
 
-\* Exynos990
+\* Snapdragon SM-8350
 
 ### UN1CA-exclusive features:
 - Native/live blur toggle

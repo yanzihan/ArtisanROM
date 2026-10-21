@@ -10,3 +10,9 @@ F: target/c2s/*
 F: target/x1s/*
 F: target/y2s/*
 F: target/z3s/*
+
+Snapdragon SM-8350
+M: YanJiaMian
+S: Maintained
+F: platform/sm8350/*
+F: target/p3q/*
