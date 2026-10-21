@@ -22,7 +22,16 @@ if [ ! -f "$WORK_DIR/vendor/etc/midas/moire_detection/moire_detection.tflite" ];
     ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/midas/moire_detection/moire_detection.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
 fi
 if [ ! "$(find "$WORK_DIR/vendor/etc/midas" -maxdepth 1 -type f -name "SRIBMQA_aiFiQA*" 2> /dev/null)" ]; then
-    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/midas/SRIBMQA_aiFiQA_V100_FP32.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    if [ -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/midas/SRIBMQA_aiFiQA_V100_FP32.tflite" ]; then
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/midas/SRIBMQA_aiFiQA_V100_FP32.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
+    else
+        # Newer donors (for example S9280) ship aiFiQA under a different
+        # name; import whichever artifact the source provides.
+        SOURCE_AI_FIQA="$(find "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/midas" -maxdepth 1 -type f -name "SRIBMQA_aiFiQA*" -printf "%f\n" -quit)"
+        if [ -n "$SOURCE_AI_FIQA" ]; then
+            ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/midas/$SOURCE_AI_FIQA" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        fi
+    fi
 fi
 if [ ! -f "$WORK_DIR/vendor/etc/midas/SRIBMQA_aiIQA_V100_FP32.tflite" ]; then
     ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/midas/SRIBMQA_aiIQA_V100_FP32.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
