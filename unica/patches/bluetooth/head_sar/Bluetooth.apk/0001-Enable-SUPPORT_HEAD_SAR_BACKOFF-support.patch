@@ -249,7 +249,7 @@ index b8684de..1a565ec 100644
 +.end method
 +
  .method static constructor <clinit>()V
-     .locals 19
+     .locals 2
  
 @@ -2395,7 +2443,7 @@
  .method public static SarType()Ljava/lang/String;
