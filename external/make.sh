@@ -232,6 +232,14 @@ if $SAMLOADER; then
     BUILD "samloader" "$SRC_DIR/external/samloader-rs" "${SAMLOADER_CMDS[@]}"
 fi
 if $SIGNAPK; then
+    # The runtime that executes the generated jar (scripts/linux/signapk) is
+    # pinned to Java 17 by buildenv.sh, so build the classes with the same
+    # toolchain. Compiling with the system JDK produces class file version 65
+    # that the Java 17 launcher refuses to load.
+    if [ -x "/usr/lib/jvm/java-17-openjdk-amd64/bin/javac" ]; then
+        export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+    fi
+
     SIGNAPK_CMDS=(
         "./gradlew build"
         "cp -a \"scripts/linux/signapk\" \"$TOOLS_DIR/bin\""
