@@ -1,0 +1,4 @@
+id=weaver
+name=p3q weaver HAL fix
+author=yanzihan
+description=Patches the S24U framework SyntheticPasswordManager to not block on the absent weaver HAL (p3q has no weaver)
