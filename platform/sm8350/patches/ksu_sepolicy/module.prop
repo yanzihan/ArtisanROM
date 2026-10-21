@@ -1,0 +1,4 @@
+id=ksu_sepolicy
+name=KernelSU SELinux policy
+author=ArtisanROM
+description=Pre-declares the ksu SELinux domain and its allow rules (the 5.4 Samsung kernel cannot patch the loaded policy at runtime).
