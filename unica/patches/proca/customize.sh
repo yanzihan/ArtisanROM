@@ -1,3 +1,12 @@
+# The SM8350 (G9980) first-stage init validates the PROCA config pointer
+# in the kernel header before its first log line and exits(1) when it finds
+# the sentinel this patch writes. Boot with the stock kernel header instead;
+# the SM8250 init the patch was written for does not perform this check.
+if [ "$TARGET_PLATFORM" = "sm8350" ]; then
+    LOG "- Skipping proca patch for sm8350 (first-stage init validates the header)"
+    return 0
+fi
+
 if [ ! -f "$WORK_DIR/kernel/boot.img" ]; then
     ABORT "File not found: ${WORK_DIR//$SRC_DIR\//}/kernel/boot.img"
 fi
