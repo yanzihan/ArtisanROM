@@ -276,6 +276,11 @@ elif xxd -p -c 0 "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" | \
     # August firmware variant used by current upstream donors.
     VK_FROM="28f7773948050037"
     VK_TO="28f777392a000014"
+elif xxd -p -c 0 "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" | \
+        grep -q "88d6743948050037"; then
+    # September/October (DZI1) firmware variant: VK flag moved to ctx+3381.
+    VK_FROM="88d6743948050037"
+    VK_TO="88d674392a000014"
 fi
 
 HEX_PATCH "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" \
