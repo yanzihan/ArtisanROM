@@ -1,0 +1,9 @@
+# Netflix
+ro.netflix.bsp_rev=Q875-32408-1
+
+# Fix RIL on Android 16
+ro.telephony.sim_slots.count=2
+# The modified framework/APEX set invalidates the source dexopt profile,
+# so first boot falls back to a full blocking AOT compile. Verify-only
+# first boot restores a 2-3 minute boot; dexopt runs in the background later.
+pm.dexopt.first-boot=verify
