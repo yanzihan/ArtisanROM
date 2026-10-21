@@ -13,14 +13,24 @@ _IMPORT_LEGACY_NXP_JNI()
     local GENERIC_PATH="system/$ABI_DIR/libnfc_nci_jni.so"
     local MODERN_JNI="$SRC_DIR/prebuilts/samsung/pa3qzcx/system/lib64/libnfc_nci_jni.so"
 
-    if [ ! -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/$CORE_PATH" ]; then
+    if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/$CORE_PATH" ]; then
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "$CORE_PATH" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+    elif [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/$ABI_DIR/vendor.samsung.hardware.nfc@2.0.so" ]; then
+        # One UI 7 targets (for example SM-G9980 HZB1) dropped the
+        # system-side NXP core: the JNI links the Samsung NFC vendor
+        # interfaces directly and the core lives in the target vendor
+        # image as nfc_nci_nxpsn.so.
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/$ABI_DIR/vendor.samsung.hardware.nfc@2.0.so" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/$ABI_DIR/vendor.samsung.hardware.nfc_aidl-V1-ndk.so" \
+            0 0 644 "u:object_r:system_lib_file:s0"
+    else
         _LOG "Missing direct NFC dependency in target firmware: $CORE_PATH"
         return 1
     fi
 
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "$JNI_PATH" \
-        0 0 644 "u:object_r:system_lib_file:s0"
-    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "$CORE_PATH" \
         0 0 644 "u:object_r:system_lib_file:s0"
 
     if [ "$ABI_DIR" = "lib64" ]; then
