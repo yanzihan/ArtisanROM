@@ -5,6 +5,12 @@
     <string name="unica_asks_title">禁用系統應用程式簽名檢查</string>
     <string name="unica_boot_sound_title">開機音效</string>
     <string name="unica_device_name_title">裝置名稱</string>
+    <string name="unica_device_image_title">設定裝置圖片</string>
+    <string name="unica_device_image_dialog_title">設定裝置圖片</string>
+    <string name="unica_device_image_dialog_msg">輸入要使用的產品代碼即可更換裝置圖片，留空則還原預設。圖片會在下次開啟「關於手機」時更新。</string>
+    <string name="unica_device_image_dialog_apply">應用</string>
+    <string name="unica_device_image_dialog_reset">還原預設</string>
+    <string name="unica_device_image_dialog_cancel">取消</string>
     <string name="unica_dialog_reboot_msg">請重新啟動以套用更改。</string>
     <string name="unica_dialog_reboot_negative">暫時不要</string>
     <string name="unica_dialog_reboot_positive">重新啟動</string>
