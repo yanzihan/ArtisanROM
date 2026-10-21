@@ -1,0 +1,1 @@
+# No bundled files (all blobs come from TARGET_FIRMWARE at apply time).
