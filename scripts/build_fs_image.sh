@@ -77,16 +77,25 @@ BUILD_IMAGE_MKFS()
             fi
             ;;
         "erofs")
-            BUILD_CMD+="mkfs.erofs "
+            # Prefer the erofs-utils 1.5 build from UY-Scuti: it compresses
+            # noticeably tighter than the 1.8.x tree (1.8.x lz4hc output
+            # overflows the p3q vendor partition), and it accepts the legacy
+            # "-zlz4hc,12" syntax but NOT "-b".
+            if [ -x "/home/yanzihan/android/UY-Scuti/resources/my_tools/boot_editor/aosp/plugged/bin/mkfs.erofs" ]; then
+                export LD_LIBRARY_PATH="/home/yanzihan/android/UY-Scuti/resources/my_tools/boot_editor/aosp/plugged/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+                BUILD_CMD+="/home/yanzihan/android/UY-Scuti/resources/my_tools/boot_editor/aosp/plugged/bin/mkfs.erofs "
+            else
+                BUILD_CMD+="mkfs.erofs "
+                BUILD_CMD+="-b \"4096\" "
+            fi
             # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/core/Makefile#2084
             if $DEBUG; then
                 # Fast iteration profile. EROFS remains compressed and fully
                 # flashable, but avoids the expensive high-compression search.
                 BUILD_CMD+="-z \"lz4\" "
             else
-                BUILD_CMD+="-z \"lz4hc,9\" "
+                BUILD_CMD+="-z \"lz4hc,12\" "
             fi
-            BUILD_CMD+="-b \"4096\" "
             BUILD_CMD+="--mount-point \"$MOUNT_POINT\" "
             BUILD_CMD+="--fs-config-file \"$FS_CONFIG_FILE\" "
             BUILD_CMD+="--file-contexts \"$FILE_CONTEXT_FILE\" "
