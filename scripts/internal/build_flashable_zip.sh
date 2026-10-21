@@ -572,6 +572,15 @@ while IFS= read -r f; do
     PARTITION="$(basename "$f" | sed "s/.img//g")"
     IS_VALID_PARTITION_NAME "$PARTITION" || continue
 
+    # Desparse the image first: img2sdat on a 4K-granularity sparse image
+    # emits tens of thousands of tiny "new" ranges, which makes TWRP's
+    # block_image_update painfully slow on device. A contiguous raw image
+    # produces a handful of large ranges and a much faster flash.
+    if [[ "$(READ_BYTES_AT "$f" "0" "4")" == "3aff26ed" ]]; then
+        EVAL "simg2img \"$f\" \"$f.raw\"" || exit 1
+        EVAL "mv -f \"$f.raw\" \"$f\""
+    fi
+
     LOG "- Converting $PARTITION.img to $PARTITION.new.dat"
     EVAL "img2sdat -o \"$TMP_DIR\" -B \"$TMP_DIR/$PARTITION.map\" \"$f\"" || exit 1
     rm -f "$f" "$TMP_DIR/$PARTITION.map"
