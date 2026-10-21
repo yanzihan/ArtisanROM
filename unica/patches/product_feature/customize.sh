@@ -144,19 +144,33 @@ if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
     if ! $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
         APPLY_PATCH "system" "system/framework/framework.jar" \
             "$MODPATH/audio/virtual_vib/framework.jar/0001-Disable-virtual-vibration-support.patch"
-        APPLY_PATCH "system" "system/framework/services.jar" \
-            "$MODPATH/audio/virtual_vib/services.jar/0001-Disable-virtual-vibration-support.patch"
+        # The donor-wide dead-code removal patch predates the S9280 services.jar
+        # layout. Disable the feature surgically instead: every consumer
+        # null-checks mVirtualVibSoundHelper, so never publishing the helper
+        # turns all virtual vibration sound paths into no-ops while keeping
+        # the surrounding classes intact.
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali/com/android/server/audio/BtHelper\$\$ExternalSyntheticLambda0.smali" "remove"
-        EVAL "sed -i \"/.source/q\" \"$APKTOOL_DIR/system/framework/services.jar/smali_classes2/com/android/server/vibrator/VibratorManagerInternal.smali\""
-        SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/vibrator/VibratorManagerService\$SamsungBroadcastReceiver\$\$ExternalSyntheticLambda1.smali" "remove"
-        SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/vibrator/VirtualVibSoundHelper.smali" "remove"
-        APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "$MODPATH/audio/virtual_vib/SecSettings.apk/0001-Disable-virtual-vibration-support.patch"
-        APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
-            "$MODPATH/audio/virtual_vib/SettingsProvider.apk/0001-Disable-virtual-vibration-support.patch"
+            "smali_classes2/com/android/server/vibrator/VibratorManagerService.smali" "replace" \
+            "bootCompleteReady()V" \
+            "iput-object v0, p0, Lcom/android/server/vibrator/VibratorManagerService;->mVirtualVibSoundHelper:Lcom/android/server/vibrator/VirtualVibSoundHelper;" \
+            "const/4 v0, 0x0"
+        # Toggle visibility only: the S9280 SecSettings controller layout
+        # drifted from the donor-wide patch, and getAvailabilityStatus is the
+        # single gate Settings consults. UNSUPPORTED_ON_DEVICE (3) keeps the
+        # unreachable setValue path out of the UI.
+        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+            "smali_classes5/com/samsung/android/settings/asbase/vibration/VirtualVibrationSoundPreferenceController.smali" "replace" \
+            "getAvailabilityStatus()I" \
+            "const/4 p0, 0x0" \
+            "const/4 p0, 0x3"
+        # Default-row removal via donor-specific patch predates the S9280
+        # SettingsProvider layout; the register allocation changed but the
+        # string literal is stable, so rename the default row instead.
+        SMALI_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
+            "smali/com/android/providers/settings/DatabaseHelper\$1.smali" "replace" \
+            "run()V" \
+            "vibration_sound_enabled" \
+            "sync_vibration_with_notification"
     fi
 else
     if $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
@@ -1144,8 +1158,16 @@ fi
 # SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MOBILEAP_11AX
 if $SOURCE_WLAN_SUPPORT_MOBILEAP_11AX; then
     if ! $TARGET_WLAN_SUPPORT_MOBILEAP_11AX; then
-        APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
-            "$MODPATH/wifi/80211ax/semwifi-service.jar/0001-Disable-MOBILEAP_11AX-support.patch"
+        # The S9280 BP4A firmware restructured showSecProductFeature() and
+        # exported SemWifiApChipSupportInfo.isSupportedSoftAp11ax().
+        if grep -q -F 'SPF_11ax=true\nSPF_6G=true' \
+                "$APKTOOL_DIR/system/framework/semwifi-service.jar/smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.smali"; then
+            APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
+                "$MODPATH/wifi/80211ax/semwifi-service.jar/0002-Disable-MOBILEAP_11AX-support-BP4A.patch"
+        else
+            APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
+                "$MODPATH/wifi/80211ax/semwifi-service.jar/0001-Disable-MOBILEAP_11AX-support.patch"
+        fi
     fi
 else
     if $TARGET_WLAN_SUPPORT_MOBILEAP_11AX; then
@@ -1287,14 +1309,25 @@ if $SOURCE_WLAN_SUPPORT_MOBILEAP_PRIORITIZE_TRAFFIC; then
         DELETE_FROM_WORK_DIR "system" "system/app/MhsAiService"
         DELETE_FROM_WORK_DIR "system" "system/etc/xgb_mhs_l1.model"
 
-        APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
-            "$MODPATH/wifi/prioritize_traffic/semwifi-service.jar/0001-Disable-MOBILEAP_PRIORITIZE_TRAFFIC-support.patch"
+        # The S9280 BP4A firmware restructured both the semwifi-service
+        # priority paths and the SecSettings mobileap classes, so the
+        # donor-wide removal patches no longer apply. The feature is
+        # inert once MhsAiService and its model are gone. (The MCF
+        # marker survives the preceding 80211ax patch, unlike the raw
+        # SPF string.)
+        if grep -q -F 'const-string v3, "SPF_MCF_AutoHotspot="' \
+                "$APKTOOL_DIR/system/framework/semwifi-service.jar/smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.smali"; then
+            LOG "- Skipping prioritize-traffic code removal (BP4A layout)"
+        else
+            APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
+                "$MODPATH/wifi/prioritize_traffic/semwifi-service.jar/0001-Disable-MOBILEAP_PRIORITIZE_TRAFFIC-support.patch"
+            APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "$MODPATH/wifi/prioritize_traffic/SecSettings.apk/0001-Disable-MOBILEAP_PRIORITIZE_TRAFFIC-support.patch"
+        fi
         SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
             "smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.smali" "replaceall" \
             "SPF_Prio_Traffic=true" \
             "SPF_Prio_Traffic=false"
-        APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "$MODPATH/wifi/prioritize_traffic/SecSettings.apk/0001-Disable-MOBILEAP_PRIORITIZE_TRAFFIC-support.patch"
     fi
 else
     if $TARGET_WLAN_SUPPORT_MOBILEAP_PRIORITIZE_TRAFFIC; then
