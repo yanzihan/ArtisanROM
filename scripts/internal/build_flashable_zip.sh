@@ -544,6 +544,27 @@ mkdir -p "$TMP_DIR/META-INF/com/google/android"
 cp -a "$SRC_DIR/prebuilts/bootable/deprecated-ota/updater" "$TMP_DIR/META-INF/com/google/android/update-binary"
 
 LOG_STEP_IN "- Building OS partitions"
+
+# The S24U camera app requires the image_codec.samsung.v2 node. A
+# packaging-only run does not execute the camera module, and the work_dir may
+# predate it, so enforce the flag before the system image is built.
+FLOATING_FEATURE="$WORK_DIR/system/system/etc/floating_feature.xml"
+if [ -f "$FLOATING_FEATURE" ] && ! grep -q "image_codec.samsung.v2" "$FLOATING_FEATURE"; then
+    LOG "- Adding image_codec.samsung.v2 to the system floating feature"
+    python3 - "$FLOATING_FEATURE" <<'PY' || exit 1
+import sys
+p = sys.argv[1]
+key = "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO"
+close = "</" + key + ">"
+lines = open(p).read().split("\n")
+for i, line in enumerate(lines):
+    if key + ">" in line and "image_codec.samsung.v2" not in line and close in line:
+        lines[i] = line.replace(close, ",image_codec.samsung.v2" + close, 1)
+        break
+open(p, "w").write("\n".join(lines))
+PY
+fi
+
 while IFS= read -r f; do
     PARTITION=$(basename "$f")
     IS_VALID_PARTITION_NAME "$PARTITION" || continue
