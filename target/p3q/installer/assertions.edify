@@ -1,0 +1,2 @@
+is_substring("G9980ZH", getprop("ro.boot.bootloader")) && verify_no_downgrade(getprop("ro.boot.bootloader"), "G9980ZHSGHZB1") && abort("E3003: This package requires Android 15 firmware.");
+is_substring("G9980ZC", getprop("ro.boot.bootloader")) && verify_no_downgrade(getprop("ro.boot.bootloader"), "G9980ZCUGHZE1") && abort("E3003: This package requires Android 15 firmware.");
