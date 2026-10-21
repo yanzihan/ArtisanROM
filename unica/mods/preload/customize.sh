@@ -1,11 +1,19 @@
-# KernelSU Next
-KERNELSU_MANAGER_APK="https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.4.2/KernelSU_Next_v3.4.2_33355-release.apk"
-# https://github.com/tiann/KernelSU/issues/886
-APK_PATH="system/preload/KernelSU-Next/com.rifsxd.ksunext-mesa==/base.apk"
+# KernelSU (backslashxx fork manager, pairs with the non-GKI 5.4 kernel)
+# v3.3.1-22 (32702): same signing cert (dummy keystore) and UAPI 6 as the
+# 32700 kernel, verified on-device: manager upgrades keep root working.
+KERNELSU_MANAGER_APK="https://github.com/backslashxx/KernelSU/releases/download/v3.3.1-22/KernelSU_v3.3.1-22_32702-release.apk"
+# Samsung preload installer requires <package-name>==/base.apk layout
+APK_PATH="system/preload/KernelSU/me.weishu.kernelsu==/base.apk"
 
-LOG "- Adding KernelSU-Next.apk to preload apps"
+LOG "- Adding KernelSU manager apk to preload apps"
 mkdir -p "$WORK_DIR/system/$(dirname "$APK_PATH")"
 DOWNLOAD_FILE "$KERNELSU_MANAGER_APK" "$WORK_DIR/system/$APK_PATH"
+
+# Samsung Internet Browser
+# https://play.google.com/store/apps/details?id=com.sec.android.app.sbrowser
+LOG "- Downloading Samsung Internet app"
+DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "com.sec.android.app.sbrowser")" \
+    "$WORK_DIR/system/system/preload/SBrowser/SBrowser.apk"
 
 while IFS= read -r i; do
     i="${i//$WORK_DIR\/system\//}"
