@@ -17,11 +17,22 @@ LOG_STEP_OUT
 # netd -> system_server in a bootloop. Ship a netbpfload with the version
 # gate patched out (the per-object kernel-version skips still apply) inside
 # a re-signed tethering APEX.
-LOG_STEP_IN "- Installing tethering APEX with patched netbpfload"
-DELETE_FROM_WORK_DIR "system" "system/apex/com.google.android.tethering_compressed.apex"
-EVAL "cp -a \"$MODPATH/com.android.tethering.apex\" \"$WORK_DIR/system/system/apex/com.android.tethering.apex\""
-SET_METADATA "system" "system/apex/com.android.tethering.apex" 0 0 644 "u:object_r:system_file:s0"
-LOG_STEP_OUT
+# One UI 9's libandroid.so needs the 9 connectivity_native symbol version
+# (AConnectivityNative_getNetworkBlockedReason@LIBCONNECTIVITY_NATIVE); the 8.5
+# APEX makes zygote abort while preloading libandroid.so, so keep 9's own for SDK 37.
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -lt 37 ]; then
+    LOG_STEP_IN "- Installing tethering APEX with patched netbpfload"
+    DELETE_FROM_WORK_DIR "system" "system/apex/com.google.android.tethering_compressed.apex"
+    EVAL "cp -a \"$MODPATH/com.android.tethering.apex\" \"$WORK_DIR/system/system/apex/com.android.tethering.apex\""
+    SET_METADATA "system" "system/apex/com.android.tethering.apex" 0 0 644 "u:object_r:system_file:s0"
+    LOG_STEP_OUT
+else
+    LOG_STEP_IN "- Installing One UI 9 tethering APEX with patched netbpfload"
+    DELETE_FROM_WORK_DIR "system" "system/apex/com.google.android.tethering_compressed.apex"
+    EVAL "cp -a \"$MODPATH/com.android.tethering_9.apex\" \"$WORK_DIR/system/system/apex/com.android.tethering.apex\""
+    SET_METADATA "system" "system/apex/com.android.tethering.apex" 0 0 644 "u:object_r:system_file:s0"
+    LOG_STEP_OUT
+fi
 
 # f2fs checkpoint rollback runs fsck against the mounted /data on this
 # fs_mgr version; drop the flag so the first mount is the only mount.
