@@ -32,7 +32,13 @@ done
 V4A_APK="https://github.com/likelikeslike/ViPER4Android/releases/download/2.1.0/ViPER4Android-2.1.0.apk"
 APK_PATH="system/preload/Viper4AndroidFX-RE/com.llsl.viper4android==/base.apk"
 
-DOWNLOAD_FILE "$V4A_APK" "$WORK_DIR/system/$APK_PATH"
+if [ -f "$SRC_DIR/prebuilts/v4a/ViPER4Android-2.1.0.apk" ]; then
+    LOG "- Using cached ViPER4Android"
+    mkdir -p "$WORK_DIR/system/$(dirname "$APK_PATH")"
+    EVAL "cp -a \"$SRC_DIR/prebuilts/v4a/ViPER4Android-2.1.0.apk\" \"$WORK_DIR/system/$APK_PATH\""
+else
+    DOWNLOAD_FILE "$V4A_APK" "$WORK_DIR/system/$APK_PATH"
+fi
 
 sed -i "/system\/preload/d" "$WORK_DIR/configs/fs_config-system"
 sed -i "/system\/preload/d" "$WORK_DIR/configs/file_context-system"

@@ -12,3 +12,8 @@ security/artisanrom_platform.pk8
 !.gitattributes
 !.gitignore
 !.gitmodules
+
+# local build caches (downloaded by mods)
+prebuilts/sbrowser/
+prebuilts/kernelsu/
+prebuilts/v4a/

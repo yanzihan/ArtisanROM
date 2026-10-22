@@ -5,16 +5,24 @@ SMALI_PATCH "system" "system/framework/framework.jar" \
 DECODE_APK "system_ext" "priv-app/SystemUI/SystemUI.apk"
 SYSTEMUI_DEVICE_CONTROLLER="$(find "$APKTOOL_DIR/system_ext/priv-app/SystemUI/SystemUI.apk" \
     -path '*/com/android/systemui/bixby2/controller/DeviceController.smali' -printf '%P\n' -quit)"
-SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
-    "$SYSTEMUI_DEVICE_CONTROLLER" "return" \
-    'isSupportPowerOffLock()Z' 'true'
+if [ -n "$SYSTEMUI_DEVICE_CONTROLLER" ]; then
+    SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
+        "$SYSTEMUI_DEVICE_CONTROLLER" "return" \
+        'isSupportPowerOffLock()Z' 'true'
+else
+    LOGW "- bixby2 DeviceController not found; skipping power-off-lock patch"
+fi
 
 # Hide Remote management tile in Settings app
 DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk"
 REMOTE_SUPPORT_CONTROLLER="$(find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk" \
     -path '*/com/samsung/android/settings/homepage/TopLevelRemoteSupportPreferenceController.smali' -printf '%P\n' -quit)"
-SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "$REMOTE_SUPPORT_CONTROLLER" "return" \
-    'getAvailabilityStatus()I' '3'
+if [ -n "$REMOTE_SUPPORT_CONTROLLER" ]; then
+    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+        "$REMOTE_SUPPORT_CONTROLLER" "return" \
+        'getAvailabilityStatus()I' '3'
+else
+    LOGW "- TopLevelRemoteSupportPreferenceController not found; skipping remote-support tile patch"
+fi
     
 unset SYSTEMUI_DEVICE_CONTROLLER REMOTE_SUPPORT_CONTROLLER

@@ -17,7 +17,7 @@ ABORT()
 
 # APPLY_PATCH <partition> <apk/jar> <patch>
 # Applies a unified diff patch to the provided APK/JAR decoded directory.
-APPLY_PATCH()
+_APPLY_PATCH()
 {
     _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
     _CHECK_NON_EMPTY_PARAM "FILE" "$2" || return 1
@@ -195,7 +195,7 @@ GET_FLOATING_FEATURE_CONFIG()
 
 # HEX_PATCH "<file>" "<old pattern>" "<new pattern>"
 # Applies the supplied hex patch to the desired file.
-HEX_PATCH()
+_HEX_PATCH()
 {
     _CHECK_NON_EMPTY_PARAM "FILE" "$1" || return 1
     _CHECK_NON_EMPTY_PARAM "FROM" "$2" || return 1
@@ -299,4 +299,28 @@ SET_PROP_IF_DIFF()
     local CURRENT
     CURRENT="$(GET_PROP "$PARTITION" "$PROP")"
     [ -z "$CURRENT" ] || [ "$CURRENT" = "$EXPECTED" ] || SET_PROP "$PARTITION" "$PROP" "$EXPECTED"
+}
+
+APPLY_PATCH()
+{
+    if _APPLY_PATCH "$@"; then
+        return 0
+    fi
+    if [ "${ARTISAN_TOLERANT:-0}" = "1" ]; then
+        LOGE "TOLERATED APPLY_PATCH failure: $*"
+        return 0
+    fi
+    return 1
+}
+
+HEX_PATCH()
+{
+    if _HEX_PATCH "$@"; then
+        return 0
+    fi
+    if [ "${ARTISAN_TOLERANT:-0}" = "1" ]; then
+        LOGE "TOLERATED HEX_PATCH failure: $*"
+        return 0
+    fi
+    return 1
 }

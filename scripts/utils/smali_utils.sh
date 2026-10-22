@@ -15,7 +15,7 @@ source "$SRC_DIR/scripts/utils/common_utils.sh"
 # - replaceall <value> <replacement>: Replaces all the occurences of the supplied string in the whole smali file
 # - return <method> <value>: Patches the supplied method in order to return the desired value
 # - strip <method>: Deletes the supplied method in the provided smali file
-SMALI_PATCH()
+_SMALI_PATCH()
 {
     _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
     _CHECK_NON_EMPTY_PARAM "FILE" "$2" || return 1
@@ -438,4 +438,17 @@ SMALI_PATCH()
     fi
 
     return 0
+}
+
+# Tolerant wrapper for bring-up builds: log failed patches instead of aborting.
+SMALI_PATCH()
+{
+    if _SMALI_PATCH "$@"; then
+        return 0
+    fi
+    if [ "${ARTISAN_TOLERANT:-0}" = "1" ]; then
+        LOGE "TOLERATED SMALI_PATCH failure: $*"
+        return 0
+    fi
+    return 1
 }
