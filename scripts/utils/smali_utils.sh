@@ -77,22 +77,43 @@ SMALI_PATCH()
 
     local FILE_PATH="$APKTOOL_DIR/$PARTITION/${FILE//system\//}"
 
-    # Check if provided smali exists
+    # Android upgrades move classes between multidex containers. If the exact
+    # path is gone, relocate by basename; when the basename is ambiguous (for
+    # example obfuscated "w.smali"), narrow it down by the target method.
     if [ ! -f "$FILE_PATH/$SMALI" ]; then
-        LOGE "Smali not found: \"/$PARTITION/$FILE/$SMALI\""
-
-        local MATCHES
-        MATCHES="$(find "$FILE_PATH" -type f -name "*${SMALI##*/}")"
-
-        if [ "$MATCHES" ]; then
-            echo -e "\n\033[0;31mPossible matches?" >&2
-            echo -e -n "$(head -n 10 <<< "${MATCHES//$FILE_PATH\//    }")" >&2
-            [ "$(wc -l <<< "$MATCHES")" -gt 10 ] && \
-                echo -e -n "\n    ...and other $(($(wc -l <<< "$MATCHES") - 10)) matches"  >&2
-            echo -e "\033[0m" >&2
+        local BASE CANDIDATES PICKED C
+        BASE="${SMALI##*/}"
+        CANDIDATES="$(find "$FILE_PATH" -type f -name "$BASE" 2> /dev/null)"
+        PICKED=""
+        if [ -n "$CANDIDATES" ]; then
+            for C in $CANDIDATES; do
+                if [ -n "${METHOD:-}" ] && grep -q -F -- "$METHOD" "$C" 2> /dev/null; then
+                    PICKED="$C"
+                elif [ -z "${METHOD:-}" ]; then
+                    PICKED="$C"
+                fi
+                if [ -n "$PICKED" ]; then break; fi
+            done
         fi
+        if [ -n "$PICKED" ]; then
+            SMALI="${PICKED#$FILE_PATH/}"
+            LOG "- Relocating smali path: /$PARTITION/$FILE/$SMALI"
+        else
+            LOGE "Smali not found: \"/$PARTITION/$FILE/$SMALI\""
 
-        return 1
+            local MATCHES
+            MATCHES="$CANDIDATES"
+
+            if [ "$MATCHES" ]; then
+                echo -e "\n\033[0;31mPossible matches?" >&2
+                echo -e -n "$(head -n 10 <<< "${MATCHES//$FILE_PATH\//    }")" >&2
+                [ "$(wc -l <<< "$MATCHES")" -gt 10 ] && \
+                    echo -e -n "\n    ...and other $(($(wc -l <<< "$MATCHES") - 10)) matches"  >&2
+                echo -e "\033[0m" >&2
+            fi
+
+            return 1
+        fi
     elif [[ "$OPERATION" == "remove" ]]; then
         local USED
         USED="$(find "$FILE_PATH" ! -path "*$SMALI" -type f -exec grep -r -n -- "$(cut -d "." -f "1" <<< "${SMALI#*/}");" {} \+ || true)"

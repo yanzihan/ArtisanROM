@@ -18,10 +18,15 @@ SMALI_PATCH "system" "system/framework/framework.jar" \
 
 # shellcheck disable=SC2016
 # Disable RescueParty
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/RescueParty.smali" "return" \
-    '-$$Nest$smisDisabled()Z' \
-    'true'
+DECODE_APK "system" "system/framework/services.jar"
+if [ -f "$APKTOOL_DIR/system/framework/services.jar/smali/com/android/server/RescueParty.smali" ]; then
+    SMALI_PATCH "system" "system/framework/services.jar" \
+        "smali/com/android/server/RescueParty.smali" "return" \
+        '-$$Nest$smisDisabled()Z' \
+        'true'
+else
+    LOGW "- RescueParty class not present in this base; skipping disable patch (TODO: SecRescueParty)"
+fi
 
 # Better model detection in FreecessController
 SMALI_PATCH "system" "system/framework/services.jar" \
@@ -35,12 +40,10 @@ VALUE=${SOURCE_FIRMWARE:0:8}
 
 DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk"
 
-FTP="
-system/priv-app/SecSettings/SecSettings.apk/smali_classes5/com/samsung/android/settings/deviceinfo/batteryinfo/BatteryRegulatoryPreferenceController.smali
-system/priv-app/SecSettings/SecSettings.apk/smali_classes5/com/samsung/android/settings/deviceinfo/batteryinfo/SecBatteryInfoFragment.smali
-"
-
-for i in $FTP; do
-    sed -i "s/SM-A236B/$VALUE/g" "$APKTOOL_DIR/$i"
+for _NAME in BatteryRegulatoryPreferenceController.smali SecBatteryInfoFragment.smali; do
+    _FILE="$(find "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk" -type f -name "$_NAME" -print -quit)"
+    [ -n "$_FILE" ] && sed -i "s/SM-A236B/$VALUE/g" "$_FILE"
 done
+unset _NAME _FILE
+
 LOG_STEP_OUT

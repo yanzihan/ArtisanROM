@@ -68,11 +68,21 @@ elif [[ "$SOURCE_SECURITY_CONFIG_ESE_CHIP_VENDOR" != "none" ]] && [[ "$SOURCE_SE
             "eSE_Vendor: ${TARGET_SECURITY_CONFIG_ESE_CHIP_VENDOR//none/}"
     fi
     if [[ "$SOURCE_SECURITY_CONFIG_ESE_COS_NAME" != "$TARGET_SECURITY_CONFIG_ESE_COS_NAME" ]]; then
+        # One UI 9 logs ", eSE_COS: JCOP..." as one literal; older bases use
+        # the bare COS name. Pick whichever literal this source actually has.
+        ESE_HAL_FROM="$SOURCE_SECURITY_CONFIG_ESE_COS_NAME"
+        ESE_HAL_TO="${TARGET_SECURITY_CONFIG_ESE_COS_NAME//none/}"
+        if grep -Fq ", eSE_COS: $SOURCE_SECURITY_CONFIG_ESE_COS_NAME" \
+                "$APKTOOL_DIR/system/app/SecureElement/SecureElement.apk/smali/com/android/se/internal/UtilExtension.smali"; then
+            ESE_HAL_FROM=", eSE_COS: $SOURCE_SECURITY_CONFIG_ESE_COS_NAME"
+            ESE_HAL_TO=", eSE_COS: ${TARGET_SECURITY_CONFIG_ESE_COS_NAME//none/}"
+        fi
         SMALI_PATCH "system" "system/app/SecureElement/SecureElement.apk" \
             "smali/com/android/se/internal/UtilExtension.smali" "replace" \
             "supportEseHal()Z" \
-            "$SOURCE_SECURITY_CONFIG_ESE_COS_NAME" \
-            "${TARGET_SECURITY_CONFIG_ESE_COS_NAME//none/}"
+            "$ESE_HAL_FROM" \
+            "$ESE_HAL_TO"
+        unset ESE_HAL_FROM ESE_HAL_TO
     fi
     if [[ "$SOURCE_SECURITY_CONFIG_ESE_CHIP_VENDOR" != "$TARGET_SECURITY_CONFIG_ESE_CHIP_VENDOR" ]]; then
         SMALI_PATCH "system" "system/framework/framework.jar" \

@@ -45,17 +45,45 @@ APPLY_PATCH()
 
     LOG "- Applying \"$(grep "^Subject:" "$PATCH" | sed "s/.*PATCH] //")\" to /$PARTITION/$FILE"
 
+    # Android major upgrades move smali files between multidex containers.
+    # Relocate each patch target by basename before giving up on the patch.
+    local PATCH_TO_APPLY="$PATCH"
+    local TMP_PATCH=""
+    local ROOT="$APKTOOL_DIR/$PARTITION/${FILE//system\//}"
+    local OLD_PATH NEW_PATH BASE MATCH
+    while IFS= read -r OLD_PATH; do
+        [ -e "$ROOT/$OLD_PATH" ] && continue
+        BASE="$(basename "$OLD_PATH")"
+        MATCH="$(find "$ROOT" -type f -name "$BASE" -print -quit 2> /dev/null)"
+        [ -z "$MATCH" ] && continue
+        NEW_PATH="${MATCH#$ROOT/}"
+        [ "$NEW_PATH" = "$OLD_PATH" ] && continue
+        if [ -z "$TMP_PATCH" ]; then
+            TMP_PATCH="$(mktemp)"
+            cp -f "$PATCH" "$TMP_PATCH"
+        fi
+        LOG "  - Relocating patch target: $OLD_PATH -> $NEW_PATH"
+        sed -i "s#a/$OLD_PATH#a/$NEW_PATH#g; s#b/$OLD_PATH#b/$NEW_PATH#g" "$TMP_PATCH"
+        PATCH_TO_APPLY="$TMP_PATCH"
+    done < <(grep "^diff --git a/" "$PATCH" | sed -E "s#^diff --git a/([^ ]+) b/.*#\1#")
+
     # A decoded APK/JAR cache may already contain this patch from a previous
     # build. Only treat it as applied when the complete patch can be cleanly
     # reversed; incompatible or partially applied patches must still fail.
     if LC_ALL=C git apply \
-        --directory="$APKTOOL_DIR/$PARTITION/${FILE//system\//}" \
-        --reverse --check --unsafe-paths "$PATCH" > /dev/null 2>&1; then
+        --directory="$ROOT" \
+        --reverse --check --unsafe-paths "$PATCH_TO_APPLY" > /dev/null 2>&1; then
         LOG "  - Patch is already applied; skipping"
+        if [ -n "$TMP_PATCH" ]; then rm -f "$TMP_PATCH"; fi
         return 0
     fi
 
-    EVAL "LC_ALL=C git apply --directory=\"$APKTOOL_DIR/$PARTITION/${FILE//system\//}\" --verbose --unsafe-paths \"$PATCH\"" || return 1
+    EVAL "LC_ALL=C git apply --directory=\"$ROOT\" --verbose --unsafe-paths \"$PATCH_TO_APPLY\"" || {
+        [ -n "$TMP_PATCH" ] && rm -f "$TMP_PATCH"
+        return 1
+    }
+    if [ -n "$TMP_PATCH" ]; then rm -f "$TMP_PATCH"; fi
+    return 0
 }
 
 # DECODE_APK <partition> <apk/jar>

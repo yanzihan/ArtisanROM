@@ -90,28 +90,25 @@ EXTRACT_PAYLOAD()
 {
     LOG_STEP_IN "- Unpacking apex_payload.img"
 
-    if ! sudo -n true &> /dev/null; then
-        LOG "\033[0;33m! Asking user for sudo password\033[0m"
-        if ! sudo -v 2> /dev/null; then
-            ABORT "Root permissions are required to unpack APEX image"
-        fi
+    if ! command -v fuse2fs > /dev/null 2>&1; then
+        ABORT "fuse2fs is required to unpack APEX payloads without root"
     fi
 
     LOG_STEP_OUT
 
     mkdir -p "$TMP_DIR/unknown/apex_payload"
     mkdir -p "$TMP_DIR/tmp_out"
-    EVAL "sudo mount -o ro \"$TMP_DIR/unknown/apex_payload.img\" \"$TMP_DIR/tmp_out\""
-    EVAL "sudo cp -a -T \"$TMP_DIR/tmp_out\" \"$TMP_DIR/unknown/apex_payload\""
-    sudo chown -hR "$(whoami):$(whoami)" "$TMP_DIR/unknown/apex_payload"
+    EVAL "fusermount -u \"$TMP_DIR/tmp_out\" &> /dev/null || true"
+    EVAL "fuse2fs -o ro \"$TMP_DIR/unknown/apex_payload.img\" \"$TMP_DIR/tmp_out\"" || ABORT "Failed to mount apex_payload.img"
+    EVAL "find \"$TMP_DIR/tmp_out\" -mindepth 1 -maxdepth 1 ! -name lost+found -exec cp -a --no-preserve=ownership {} \"$TMP_DIR/unknown/apex_payload\" \\;" || ABORT "Failed to copy apex_payload"
     if [ -d "$TMP_DIR/unknown/apex_payload/lost+found" ]; then
         rm -rf "$TMP_DIR/unknown/apex_payload/lost+found"
     fi
 
     LOG "- Generating fs_config/file_context for apex_payload.img"
 
-    EVAL "sudo find \"$TMP_DIR/tmp_out\" | sudo xargs -I \"{}\" -P \"$(nproc)\" stat -c \"%n %u %g %a capabilities=0x0\" \"{}\" > \"$TMP_DIR/unknown/fs_config-apex_payload\""
-    EVAL "sudo find \"$TMP_DIR/tmp_out\" | sudo xargs -I \"{}\" -P \"$(nproc)\" sh -c 'echo \"\$1 \$(getfattr -n security.selinux --only-values -h --absolute-names \"\$1\")\"' \"sh\" \"{}\" > \"$TMP_DIR/unknown/file_context-apex_payload\""
+    EVAL "find \"$TMP_DIR/tmp_out\" -path '*/lost+found' -prune -o -print | xargs -I \"{}\" -P \"$(nproc)\" stat -c \"%n %u %g %a capabilities=0x0\" \"{}\" > \"$TMP_DIR/unknown/fs_config-apex_payload\"" || ABORT "Failed to generate fs_config"
+    EVAL "find \"$TMP_DIR/tmp_out\" -path '*/lost+found' -prune -o -print | xargs -I \"{}\" -P \"$(nproc)\" sh -c 'echo \"\$1 \$(getfattr -n security.selinux --only-values -h --absolute-names \"\$1\")\"' \"sh\" \"{}\" > \"$TMP_DIR/unknown/file_context-apex_payload\"" || ABORT "Failed to generate file_context"
     sort -o "$TMP_DIR/unknown/file_context-apex_payload" "$TMP_DIR/unknown/file_context-apex_payload"
     sort -o "$TMP_DIR/unknown/fs_config-apex_payload" "$TMP_DIR/unknown/fs_config-apex_payload"
     sed -i -e "s|$TMP_DIR/tmp_out |/ |g" -e "s|$TMP_DIR/tmp_out||g" "$TMP_DIR/unknown/file_context-apex_payload"
@@ -119,8 +116,8 @@ EXTRACT_PAYLOAD()
         -e "s|\]|\\\]|g" -e "s|\*|\\\*|g" "$TMP_DIR/unknown/file_context-apex_payload"
     sed -i -e "s|$TMP_DIR/tmp_out | |g" -e "s|$TMP_DIR/tmp_out/||g" "$TMP_DIR/unknown/fs_config-apex_payload"
 
-    EVAL "sudo umount \"$TMP_DIR/tmp_out\""
-    rm -rf "$TMP_DIR/tmp_out" "$TMP_DIR/unknown/apex_payload.img"
+    EVAL "fusermount -u -z \"$TMP_DIR/tmp_out\" || true"
+    rm -rf "$TMP_DIR/tmp_out" "$TMP_DIR/unknown/apex_payload.img" || true
 }
 
 LOG_MISSING_PATCHES()
@@ -211,9 +208,11 @@ if ! $SOURCE_BLUETOOTH_SUPPORT_A2DP_SBM; then
         fi
         DECODE_APK_IN_APEX "$BT_APK"
         LOG "- Applying \"Enable SUPPORT_A2DP_SBM support\" to apex_payload/$BT_APK_REL"
-        APPLY_PATCH "system" "$BT_APK_WORK_PATH" \
+        if ! APPLY_PATCH "system" "$BT_APK_WORK_PATH" \
             "$SBM_PATCH" \
-            > /dev/null
+            > /dev/null; then
+            LOGW "- SBM patch does not apply on this base yet; leaving SBM disabled (TODO)"
+        fi
         unset SBM_PATCH
     fi
 else
@@ -228,9 +227,11 @@ if ! $SOURCE_BLUETOOTH_SUPPORT_HEAD_SAR_BACKOFF; then
     if $TARGET_BLUETOOTH_SUPPORT_HEAD_SAR_BACKOFF; then
         DECODE_APK_IN_APEX "$BT_APK"
         LOG "- Applying \"Enable SUPPORT_HEAD_SAR_BACKOFF support\" to apex_payload/$BT_APK_REL"
-        APPLY_PATCH "system" "$BT_APK_WORK_PATH" \
+        if ! APPLY_PATCH "system" "$BT_APK_WORK_PATH" \
             "$MODPATH/head_sar/Bluetooth.apk/0001-Enable-SUPPORT_HEAD_SAR_BACKOFF-support.patch" \
-            > /dev/null
+            > /dev/null; then
+            LOGW "- HEAD_SAR patch does not apply on this base yet; leaving it disabled (TODO)"
+        fi
     fi
 else
     if ! $TARGET_BLUETOOTH_SUPPORT_HEAD_SAR_BACKOFF; then
@@ -283,8 +284,12 @@ elif xxd -p -c 0 "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" | \
     VK_TO="88d674392a000014"
 fi
 
-HEX_PATCH "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" \
-    "$VK_FROM" "$VK_TO" > /dev/null
+if xxd -p -c 0 "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" | grep -q "$VK_FROM"; then
+    HEX_PATCH "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" \
+        "$VK_FROM" "$VK_TO" > /dev/null
+else
+    LOGW "- VaultKeeper pattern not found on this base; leaving it enabled (TODO)"
+fi
 
 BUILD_APK_IN_APEX "$BT_APK"
 BUILD_APK_IN_APEX "$TMP_DIR/unknown/apex_payload/javalib/framework-bluetooth.jar"

@@ -521,16 +521,27 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
             "onChange(Z)V" \
             "CLOUDY_WORK_MODE" \
             "1"
+        USB_HANDLER_SMALI=""
+        for _f in "$APKTOOL_DIR/system/framework/services.jar/smali_classes2/com/android/server/usb/"UsbHostRestrictor\$*.smali; do
+            [ -f "$_f" ] || continue
+            if grep -q "SUNNY_WORK_MODE" "$_f" && grep -q "handleMessage" "$_f"; then
+                USB_HANDLER_SMALI="${_f#$APKTOOL_DIR/system/framework/services.jar/}"
+                break
+            fi
+        done
+        unset _f
+        [ -n "$USB_HANDLER_SMALI" ] || USB_HANDLER_SMALI="smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali"
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
+            "$USB_HANDLER_SMALI" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "SUNNY_WORK_MODE" \
             "0"
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
+            "$USB_HANDLER_SMALI" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "RAINY_RESTRICT_MODE" \
             "2"
+        unset USB_HANDLER_SMALI
         SMALI_PATCH "system" "system/framework/services.jar" \
             "smali_classes2/com/android/server/usb/UsbService\$Lifecycle.smali" "replace" \
             "onBootPhase(I)V" \

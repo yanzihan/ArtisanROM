@@ -12,7 +12,12 @@ _LOG() { if $DEBUG; then LOGW "$1"; else ABORT "$1"; fi }
 DVFS_FEATURE_SMALI="smali/r1/c.smali"
 DVFS_PROPERTIES_SMALI="smali/z1/e.smali"
 SSRM_FEATURE_SMALI="smali/U1/w.smali"
-if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 36 ]; then
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ]; then
+    # One UI 9 (Android 17) re-obfuscated SDHMS again.
+    DVFS_FEATURE_SMALI="smali/c4/c.smali"
+    DVFS_PROPERTIES_SMALI="smali/k4/e.smali"
+    SSRM_FEATURE_SMALI="smali/n5/i0.smali"
+elif [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 36 ]; then
     DVFS_FEATURE_SMALI="smali/c4/c.smali"
     DVFS_PROPERTIES_SMALI="smali/k4/e.smali"
     SSRM_FEATURE_SMALI="smali/o5/w.smali"

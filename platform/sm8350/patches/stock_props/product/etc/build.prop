@@ -7,41 +7,41 @@ ro.product.product.device=qssi_64
 ro.product.product.manufacturer=samsung
 ro.product.product.model=SM-G9980
 ro.product.product.name=p3qzhx
-ro.product.build.date=Tue Sep 22 12:17:17 KST 2026
-ro.product.build.date.utc=1790047037
-ro.product.build.fingerprint=samsung/p3qzhx/qssi_64:16/BP4A.251205.006/S9280ZHS6DZI1:user/release-keys
-ro.product.build.id=BP4A.251205.006
+ro.product.build.date=Sun Sep 20 10:28:56 KST 2026
+ro.product.build.date.utc=1789867736
+ro.product.build.fingerprint=samsung/p3qzhx/qssi_64:17/CP2A.260605.016/S9280ZHU6EZIF:user/release-keys
+ro.product.build.id=CP2A.260605.016
 ro.product.build.tags=release-keys
 ro.product.build.type=user
-ro.product.build.version.incremental=S9280ZHS6DZI1
-ro.product.build.version.release=16
-ro.product.build.version.release_or_codename=16
-ro.product.build.version.sdk=36
-ro.product.build.version.sdk_full=36.1
+ro.product.build.version.incremental=S9280ZHU6EZIF
+ro.product.build.version.release=17
+ro.product.build.version.release_or_codename=17
+ro.product.build.version.sdk=37
+ro.product.build.version.sdk_full=37.0
 ####################################
 # from gen_build_prop.py:generate_build_info
 ####################################
 # begin build properties
-ro.build.id=BP4A.251205.006
-ro.build.PDA=S9280ZHS6DZI1
-ro.build.display.id=BP4A.251205.006.S9280ZHS6DZI1
-ro.build.version.incremental=S9280ZHS6DZI1
-ro.build.version.sdk=36
-ro.build.version.sdk_full=36.1
+ro.build.id=CP2A.260605.016
+ro.build.PDA=S9280ZHU6EZIF
+ro.build.display.id=CP2A.260605.016.S9280ZHU6EZIF
+ro.build.version.incremental=S9280ZHU6EZIF
+ro.build.version.sdk=37
+ro.build.version.sdk_full=37.0
 ro.build.version.preview_sdk=0
 ro.build.version.preview_sdk_fingerprint=REL
 ro.build.version.codename=REL
 ro.build.version.all_codenames=REL
-ro.build.version.known_codenames=Base,Base11,Cupcake,Donut,Eclair,Eclair01,EclairMr1,Froyo,Gingerbread,GingerbreadMr1,Honeycomb,HoneycombMr1,HoneycombMr2,IceCreamSandwich,IceCreamSandwichMr1,JellyBean,JellyBeanMr1,JellyBeanMr2,Kitkat,KitkatWatch,Lollipop,LollipopMr1,M,N,NMr1,O,OMr1,P,Q,R,S,Sv2,Tiramisu,UpsideDownCake,VanillaIceCream,Baklava
-ro.build.version.release=16
-ro.build.version.release_or_codename=16
-ro.build.version.release_or_preview_display=16
+ro.build.version.known_codenames=Base,Base11,Cupcake,Donut,Eclair,Eclair01,EclairMr1,Froyo,Gingerbread,GingerbreadMr1,Honeycomb,HoneycombMr1,HoneycombMr2,IceCreamSandwich,IceCreamSandwichMr1,JellyBean,JellyBeanMr1,JellyBeanMr2,Kitkat,KitkatWatch,Lollipop,LollipopMr1,M,N,NMr1,O,OMr1,P,Q,R,S,Sv2,Tiramisu,UpsideDownCake,VanillaIceCream,Baklava,CANARY,CinnamonBun
+ro.build.version.release=17
+ro.build.version.release_or_codename=17
+ro.build.version.release_or_preview_display=17
 ro.build.version.security_patch=2026-09-05
 ro.build.version.security_index=1
-ro.build.version.base_os=samsung/e3qzhx/e3q:16/BP4A.251205.006/S9280ZHU5DZDP:user/release-keys
+ro.build.version.base_os=
 ro.build.version.min_supported_target_sdk=28
-ro.build.date=Tue Sep 22 12:17:17 KST 2026
-ro.build.date.utc=1790047037
+ro.build.date=Sun Sep 20 10:28:56 KST 2026
+ro.build.date.utc=1789867736
 ro.build.type=user
 ro.build.user=dpi
 ro.build.host=SWDM8401
@@ -53,7 +53,7 @@ ro.product.cpu.abi=arm64-v8a
 ro.product.locale=en-GB
 ro.wifi.channels=
 # Do not try to parse description or thumbprint
-ro.build.description=e3qzhx-user 16 BP4A.251205.006 S9280ZHS6DZI1 release-keys
+ro.build.description=e3qzhx-user 17 CP2A.260605.016 S9280ZHU6EZIF release-keys
 # end build properties
 ####################################
 # from packages/modules/Bluetooth/system/bluetooth.prop
@@ -187,7 +187,7 @@ ro.setupwizard.rotation_locked=false
 ro.setupwizard.wifi_on_exit=false
 ro.setupwizard.mode=OPTIONAL
 ro.opa.eligible_device=true
-ro.com.google.gmsversion=16_202512
+ro.com.google.gmsversion=17_202606
 setupwizard.theme=glif_expressive
 setupwizard.feature.enable_minors_setup_flow=false
 # end of file

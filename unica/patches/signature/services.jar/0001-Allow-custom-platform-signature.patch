@@ -65,7 +65,7 @@ index 8bd844f2..ae19591f 100644
 +.end method
 +
  .method public static hasLauncherEntry(Lcom/android/internal/pm/parsing/pkg/ParsedPackage;)Z
-     .locals 6
+     .locals 0
  
 @@ -22501,7 +22543,9 @@
  
@@ -235,7 +235,7 @@ index 17567247..1fa651b2 100644
 +.end method
 +
  .method public static setInstantAppForUser(Lcom/android/server/pm/PackageManagerServiceInjector;Lcom/android/server/pm/PackageSetting;IZZ)V
-     .locals 6
+     .locals 0
  
 @@ -5003,3 +5047,23 @@
      :goto_2
