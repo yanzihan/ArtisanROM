@@ -43,6 +43,11 @@ ADD_ENTRY()
     fi
 }
 
+# 1) One UI 9 ships version-matched 64-bit ART/Runtime/I18n APEXes. Replacing
+# them with the older 8.5 donor APEXes breaks zygote (ART/bionic version
+# mismatch), so keep the source APEXes on SDK 37+ and only import the 32-bit
+# native libraries below.
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -lt 37 ]; then
 # 1) Multilib Runtime / I18n / ART APEXes replace the 64-bit-only ones
 for KEY in "com.android.runtime" "com.android.i18n" "android.art"; do
     DONOR_APEX="$(find "$DONOR_DIR/apex" -maxdepth 1 -name "*$KEY*" ! -name '*.0[1-9]' ! -name '*.[1-9][0-9]' 2> /dev/null | head -n 1)"
@@ -67,6 +72,8 @@ for KEY in "com.android.runtime" "com.android.i18n" "android.art"; do
     fi
     ADD_ENTRY "system/apex/$NAME" 644 "u:object_r:system_file:s0"
 done
+
+fi
 
 # 2) Complete /system/lib, without overwriting anything the build already has
 COUNT=0
