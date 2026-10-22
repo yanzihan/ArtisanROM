@@ -153,6 +153,9 @@ GENERATE_OP_LIST()
         $HAS_SYSTEM_DLKM && echo "add system_dlkm $TARGET_SUPER_GROUP_NAME"
         if $HAS_SYSTEM; then
             PARTITION_SIZE="$(GET_IMAGE_SIZE "$TMP_DIR/system.img")"
+            if [ "${TARGET_SYSTEM_PARTITION_SLACK:-0}" -gt 0 ]; then
+                PARTITION_SIZE=$((PARTITION_SIZE + TARGET_SYSTEM_PARTITION_SLACK))
+            fi
             echo "# Grow partition system from 0 to $PARTITION_SIZE"
             echo "resize system $PARTITION_SIZE"
             OCCUPIED_SPACE=$((OCCUPIED_SPACE + PARTITION_SIZE))

@@ -1,23 +1,25 @@
-# Drop system_ext/product mapping lines that reference versioned attributes
-# (e.g. vendor_smcinvoke_device_30_0) which no policy file declares.
-# The source firmware's mappings list QC vendor types the target's vendor
-# policy doesn't know, and init's secilc then fails to compile the policy.
-VER="$(cat "$WORK_DIR/vendor/etc/selinux/plat_sepolicy_vers.txt" 2>/dev/null)"
-if [ -n "$VER" ]; then
-    SUFFIX="_${VER//./_}"
-    SYSTEM_EXT_SE="$WORK_DIR/system/system/system_ext/etc/selinux"
-    [ -d "$WORK_DIR/system_ext/etc/selinux" ] && SYSTEM_EXT_SE="$WORK_DIR/system_ext/etc/selinux"
-    ALL_CIL="$(find "$WORK_DIR/system/system/etc/selinux" "$SYSTEM_EXT_SE" "$WORK_DIR/product/etc/selinux" \
-        "$WORK_DIR/vendor/etc/selinux" "$WORK_DIR/odm/etc/selinux" -name "*.cil" 2> /dev/null)"
-    for MAPPING in "$SYSTEM_EXT_SE/mapping/$VER.cil" "$WORK_DIR/product/etc/selinux/mapping/$VER.cil"; do
-        [ -f "$MAPPING" ] || continue
-        while IFS= read -r ATTR; do
-            # shellcheck disable=SC2086
-            if ! grep -q -E "^\(typeattribute $ATTR\)" $ALL_CIL; then
-                LOG "- Removing undeclared $ATTR from ${MAPPING//$WORK_DIR/}"
-                EVAL "sed -i -E '/\\(expandtypeattribute \\($ATTR\\)|\\(typeattributeset $ATTR /d' \"$MAPPING\""
-            fi
-        done < <(grep -oE "\(expandtypeattribute \([a-z0-9_]+$SUFFIX\)" "$MAPPING" | sed -E 's/.*\(([a-z0-9_]+)\)$/\1/' | sort -u)
-    done
-fi
-unset VER SUFFIX SYSTEM_EXT_SE ALL_CIL MAPPING ATTR
+# One UI 9 (Android 17) ships SELinux mapping files only for vendor APIs
+# 31+. p3q's vendor is API 30, so init's secilc fails on
+# /system/etc/selinux/mapping/30.0.cil and aborts (InitFatalReboot).
+# Restore the legacy mappings from the target (p3q) firmware.
+LOG_STEP_IN "- Adding legacy SELinux vendor-API mappings"
+
+TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+MAP_SRC="$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/selinux/mapping"
+MAP_DST="$WORK_DIR/system/system/etc/selinux/mapping"
+
+mkdir -p "$MAP_DST"
+for f in 30.0.cil 30.0.compat.cil; do
+    [ -f "$MAP_SRC/$f" ] || continue
+    [ -f "$MAP_DST/$f" ] && continue
+    cp -f "$MAP_SRC/$f" "$MAP_DST/$f"
+    grep -q "system/etc/selinux/mapping/$f " "$WORK_DIR/configs/fs_config-system" 2> /dev/null || \
+        echo "system/etc/selinux/mapping/$f 0 0 644 capabilities=0x0" >> "$WORK_DIR/configs/fs_config-system"
+    esc="$(echo "$f" | sed 's/\./\\\\./g')"
+    grep -q "/system/etc/selinux/mapping/$esc " "$WORK_DIR/configs/file_context-system" 2> /dev/null || \
+        echo "/system/etc/selinux/mapping/$esc u:object_r:system_file:s0" >> "$WORK_DIR/configs/file_context-system"
+    LOG "- Added mapping/$f from target firmware"
+done
+unset TARGET_FIRMWARE_PATH MAP_SRC MAP_DST f esc
+
+LOG_STEP_OUT
